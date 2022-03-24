@@ -1,0 +1,63 @@
+body {
+    background-color: beige;
+}
+
+.form-group input {
+    width: 200px;
+}
+
+.row {
+    display: flex;
+    justify-content: start;
+    margin-right: 0px;
+    margin-left: 0px;
+}
+.row > * {
+    margin-right: 10px;
+}
+
+.container {
+    background-color: aliceblue;
+    padding: 20px;
+    margin-bottom: 10px;
+    border-radius: 6px;
+}
+
+.cell {
+    width: 13px;
+    height: 13px;
+    border: 1px solid black;
+    margin: 1px;
+}
+.white {
+    background-color: white;
+}
+.black {
+    background-color: black;
+}
+.water {
+    background-color: blue;
+}
+.wood {
+    background-color: brown;
+}
+.sand {
+    background-color: sandybrown;
+}
+.fire {
+    background-color: red;
+}
+.smoke {
+    background-color: gainsboro;
+}
+
+
+.gridrow{
+    display: flex;
+    justify-content: center;
+}
+
+.btn-info{
+    height: 40px;
+    align-self: center;
+}

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Cellular Automaton</title>
+
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+        <link rel="stylesheet" href="style.css">
+    </head>
+    <body>
+        <div class="container input-parameters">
+            <h1>Cellular Automaton 2D</h1>
+            <div class="row">
+                <button type="button" class="btn btn-info" id="simulation-step-btn" onClick="simulationStepOnClick()">Simulation step</button>
+                <select class="form-select" aria-label="Default select example" id="select-cell-type">
+                    <option value="1" selected>Create wall</option>
+                    <option value="0">Destroy cell</option>
+                    <option value="2">Create water</option>
+                    <option value="3">Create wood</option>
+                    <option value="4">Create fire</option>
+                    <option value="5">Create sand</option>
+                </select>
+
+                <button type="button" class="btn btn-info" id="start-btn" onClick="startSimulation()">Start simulation</button>
+
+            </div>
+        </div>
+
+        <div class="container canvas" id="canvas">
+            
+        </div>
+    </body>
+
+    <script src="main.js"></script> 
+
+</html> 
