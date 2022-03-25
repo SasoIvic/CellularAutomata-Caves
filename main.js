@@ -13,8 +13,9 @@ class Cell {
     this.type = type;
     this.lifeTime = lifeTime;
     this.checked = false;
-    this.extraInfo = null;
+    this.aboveInfoColor = "white";
     this.waterAmount = (type == "water" ? 1 : 0);
+    this.woodAmount = (type == "wood" ? 1 : 0);
   }
 }
 
@@ -38,7 +39,7 @@ function zeros(dimensions) {
 function initialiseMap(map){
     for(let x=0; x<width; x++){
         for(let y=0; y<height; y++){
-            if(Math.random() < chanceToStartAlive){
+            if(Math.random() < chanceToStartAlive || x == 0 || y == 0 || x == width -1 || y == height -1){
                 map[x][y] = new Cell(1, "black", null);
             }
             else{
@@ -125,12 +126,31 @@ function drawField(map) {
         html += "<div class='gridrow'>";
         for(let j = 0; j < width; j++) {
 
-          let waterPercent =  map[i][j].waterAmount * 100;
-          let airPercent =  100 - waterPercent;
+          let style = "";
 
-          let style = (waterPercent > 0 ? "style='background: linear-gradient(0deg, blue " + waterPercent + "%, white " + airPercent + "%);'" : "")
+          if(map[i][j].type == "water"){
+            let waterPercent =  (map[i][j].waterAmount * 100);
+            let topPercent =  100 - waterPercent;
 
-            html += "<div class='cell " + (map[i][j].type) + "' onclick='changeCellType(this)' " + style + " id='" + i + "," + j + "'></div>";
+            if (waterPercent > 0.9 && !map[i][j].aboveInfoColor)
+              style = "style='background: linear-gradient(0deg, blue " + waterPercent + "%, white " + topPercent + "%);'";
+            else if (waterPercent > 1 && map[i][j].aboveInfoColor)
+              style = "style='background: linear-gradient(0deg, blue " + waterPercent + "%, " + map[i][j].aboveInfoColor + " " + waterPercent + "% " + topPercent + "%);'";
+          }
+
+          if(map[i][j].type == "wood"){
+
+            let woodPercent =  (map[i][j].woodAmount * 100);
+            let topPercent =  100 - woodPercent;
+
+            if (woodPercent > 0.9 && !map[i][j].aboveInfoColor)
+              style = "style='background: linear-gradient(0deg, brown " + woodPercent + "%, white " + topPercent + "%);'";
+            else if (woodPercent > 1 && map[i][j].aboveInfoColor)
+              style = "style='background: linear-gradient(0deg, brown " + woodPercent + "%, " + map[i][j].aboveInfoColor + " " + woodPercent + "% " + topPercent + "%);'";
+
+          }
+
+          html += "<div class='cell " + (map[i][j].type) + "' onclick='changeCellType(this)' " + style + " id='" + i + "," + j + "'></div>";
         }
         html += "</div>"
     }
@@ -145,7 +165,7 @@ function changeCellType(el){
 
     let val = document.getElementById("select-cell-type").value;
     
-    cellmap[posX][posY] = new Cell(val, getCellType(val), null);
+    cellmap[posX][posY] = new Cell(val, getCellType(val), (val == 4 ||val == 6 ? 10 : null));
     el.className = "cell " + getCellType(val);
 }
 
@@ -191,13 +211,19 @@ async function startSimulation(){
           cellmap[x][y].checked = true;
 
           // vse (razen dima) pade če spodnja celica ni živa
-          if(lowerCell.type == "white" && currentCell.type != "gas"){
+          if(lowerCell.type == "white" && currentCell.type != "smoke"){
             cellmap[x+1][y] = currentCell;
             cellmap[x][y] = new Cell(0, "white", null);
           }
 
+          // dim se dviga
+          if(currentCell.type == "smoke" && upperCell.type == "white"){
+            cellmap[x-1][y] = currentCell;
+            cellmap[x][y] = new Cell(0, "white", null);
+          }
+
           if(currentCell.type == "water"){
-      
+            // water splits up and down
             if(lowerCell.type == "water" && lowerCell.waterAmount < 1){
               let gapVolume = 1 -  lowerCell.waterAmount;
 
@@ -214,7 +240,7 @@ async function startSimulation(){
               }
             }
 
-            // 2nd rule - water splits
+            // water splits left and right
             if(lowerCell.type == "black" || lowerCell.waterAmount == 1){
 
               if(currentCell.waterAmount < 0.001){
@@ -265,28 +291,94 @@ async function startSimulation(){
                 cellmap[x][y+1].waterAmount = waterAmountPerCell;
                 cellmap[x][y].waterAmount = waterAmountPerCell;
               }
-
-              /*
-              cellmap[x][y].extraInfo = "third";
-
-              if (leftCell.type == "white"){
-                cellmap[x][y-1] = new Cell(2, "water", null);
-                cellmap[x][y].extraInfo = "third";
-              }
-
-              if (rightCell.type == "white"){
-                cellmap[x][y+1] = new Cell(2, "water", null);
-                cellmap[x][y].extraInfo = "third";
-              }
-            }
-
-            if (upperCell.type == "water"){
-              cellmap[x][y].extraInfo = null;
-            }
-            */
           
             }
+
+            // če pade na les ga izpodrine
+            if(lowerCell.type == "wood"){
+              cellmap[x+1][y] = currentCell;
+              cellmap[x][y] = lowerCell;
+            }
           
+          }
+
+          if(currentCell.type == "wood"){
+            // les plava na vodi
+            if (lowerCell.type == "water" && lowerCell.waterAmount < 1){
+              let gapAboveWater = 1 - lowerCell.waterAmount;
+              let makeGapAboveWood = 1 - gapAboveWater;
+
+              cellmap[x+1][y].aboveInfoColor = "brown";
+              cellmap[x][y].woodAmount = makeGapAboveWood;
+            }
+          }
+
+          if(currentCell.type == "fire"){
+            
+            // če pride v stik z lesom, ga uniči
+            if(lowerCell.type == "wood"){
+              cellmap[x+1][y] = new Cell(4, "fire", 10);
+
+              // zgoraj nastane dim
+              cellmap[x][y] = new Cell(6, "smoke", 8);
+
+              // poglej če je v spodnji celici potrebno odstraniti gradient
+              if (cellmap[x+2][y].aboveInfoColor != "white"){
+                cellmap[x+2][y].aboveInfoColor = "white"
+              }
+            }
+            if(upperCell.type == "wood"){
+              cellmap[x-1][y] = new Cell(6, "smoke", 8);
+
+              if (cellmap[x][y].aboveInfoColor != "white"){
+                cellmap[x][y].aboveInfoColor = "white"
+              }
+            }
+            if(leftCell.type == "wood"){
+              cellmap[x][y-1] = new Cell(4, "fire", 10);
+
+              cellmap[x-1][y-1] = new Cell(6, "smoke", 8);
+
+              if (cellmap[x+1][y-1].aboveInfoColor != "white"){
+                cellmap[x+1][y-1].aboveInfoColor = "white"
+              }
+            }
+            if(rightCell.type == "wood"){
+              cellmap[x][y+1] = new Cell(4, "fire", 10);
+
+              cellmap[x-1][y+1] = new Cell(6, "smoke", 8);
+
+              if (cellmap[x+1][y+1].aboveInfoColor != "white"){
+                cellmap[x+1][y+1].aboveInfoColor = "white"
+              }
+            }
+
+            //izgine ob stiku z vodo in del vode izpari
+            if(lowerCell.type == "water"){
+              cellmap[x][y] = new Cell(0, "white", null);
+              cellmap[x+1][y].waterAmount *= 0.8;
+            }
+            if(upperCell.type == "water"){
+              cellmap[x][y] = new Cell(0, "white", null);
+              cellmap[x-1][y].waterAmount *= 0.8;
+            }
+            if(leftCell.type == "water"){
+              cellmap[x][y] = new Cell(0, "white", null);
+              cellmap[x][y-1].waterAmount *= 0.8;
+            }
+            if(rightCell.type == "water"){
+              cellmap[x][y] = new Cell(0, "white", null);
+              cellmap[x][y+1].waterAmount *= 0.8;
+            }
+          }
+
+
+          // cpreveri če celico uničimo
+          if(currentCell.lifeTime == 0){
+            cellmap[x][y] = new Cell(0, "white", null);
+          }
+          else if (currentCell.lifeTime > 0){
+            cellmap[x][y].lifeTime -= 1;
           }
 
         }

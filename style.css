@@ -26,8 +26,8 @@ body {
 .cell {
     width: 13px;
     height: 13px;
-    border: 1px solid black;
-    margin: 1px;
+    /*border: 1px solid black;
+    margin: 1px;*/
 }
 .white {
     background-color: white;
