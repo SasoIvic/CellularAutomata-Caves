@@ -45,10 +45,11 @@ body {
     background-color: sandybrown;
 }
 .fire {
-    background-color: red;
+    background-image: linear-gradient(yellow, red);
 }
 .smoke {
-    background-color: gainsboro;
+    background: radial-gradient(gray, gainsboro);
+    border-radius: 20%;
 }
 
 
